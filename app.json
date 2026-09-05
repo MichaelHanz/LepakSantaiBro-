@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Santai Lepak Bro",
+    "slug": "santai-lepak-bro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "santailepakbro",
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true },
+    "android": { "package": "com.santailepakbro.app" },
+    "ios": { "bundleIdentifier": "com.santailepakbro.app" }
+  }
+}
