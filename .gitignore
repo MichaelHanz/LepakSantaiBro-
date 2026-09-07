@@ -9,3 +9,7 @@ dist/
 
 expo-env.d.ts
 # @end expo-cli
+# python
+__pycache__/
+*.pyc
+.venv/
