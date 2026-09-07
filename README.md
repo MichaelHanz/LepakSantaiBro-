@@ -4,12 +4,31 @@ A native React Native + Expo hackathon prototype for **Group Trip Mediator**: a 
 
 ## What is in the demo
 
-- **Fission & fusion day plan** with shared Anchor Nodes and intentionally split Ghost Blocks.
-- **Asymmetrical ledger** separating communal burn from personal “rogue spend”, with a deterministic guard that uses the lowest member budget as the Group Safe Limit.
-- **Blind threshold member view** showing pace preference, social battery, and daily budget without exposing private answers.
-- **Eject flow** with a working modal and precomputed weighted nearest-node route to The Zhongshan Building. The confirmation patches the evening fusion point and gives visible feedback.
+The home screen is an **agentic chat interface**: you type natural-language requests
+("eject Aina", "add RM 60 for dinner", "what's our safe limit") and the agent routes
+them to deterministic tools, then answers with a chat bubble plus a rich result card.
 
-The prototype keeps the core product math local and deterministic so it is reliable during a pitch. External routing, Supabase sync, auth, and LLM narration are intentionally represented with precomputed demo data for the hackathon build.
+- **Asymmetrical ledger** separating communal burn from personal “rogue spend”, guarded by
+  the Group Safe Limit (the *minimum* member budget, never the average).
+- **Blind threshold onboarding** — constraints are submitted privately and only the
+  aggregate is ever surfaced; no member sees another's budget or battery.
+- **Eject engine** — weighted nearest-node scoring over sanctuary candidates, with a hard
+  budget filter, a cheapest-option fallback, independent handling of simultaneous ejects,
+  and a recomputed verdict on whether the ejected member still makes the next anchor node.
+- **Fission & fusion itinerary** built from structured anchor nodes and ghost blocks, split
+  by each member's pace preference.
+
+The LLM (Gemini primary, Groq fallback) only parses intent and narrates results — every
+figure comes from the deterministic engines. With no API key the app falls back to a
+keyword/regex parser, so the demo runs fully offline. Trip, member and ledger state
+persists locally via AsyncStorage.
+
+### Optional LLM keys
+
+```bash
+export EXPO_PUBLIC_GEMINI_API_KEY=...   # primary
+export EXPO_PUBLIC_GROQ_API_KEY=...     # fallback
+```
 
 ## Install and run
 
@@ -28,21 +47,30 @@ Then press `i` for iOS, `a` for Android, or scan the QR code with a development 
 npm run web
 ```
 
-Run the type checker before committing:
+Run the type checker and engine unit tests before committing:
 
 ```bash
 npm run typecheck
+npm test
 ```
 
 ## Project structure
 
 ```text
 app/
-  _layout.tsx   Expo Router root layout
-  index.tsx     Single-screen native demo with Trip, Money, People tabs
-app.json        Expo app metadata and native package identifiers
-package.json    Expo / React Native dependencies and scripts
-tsconfig.json   Strict TypeScript configuration
+  _layout.tsx              Expo Router root layout
+  index.tsx                Route entry, renders the agent chat screen
+src/
+  screens/                 AgentChatScreen
+  components/chat/         Header, transcript bubbles, prompt bar
+  components/cards/        Eject route, ledger, safe-limit, itinerary result cards
+  components/onboarding/   Blind constraints sheet
+  lib/engines/             Deterministic safe-limit, ledger, eject and itinerary math
+  lib/agent/               Intent routing, Gemini/Groq client, tool dispatch
+  lib/storage.ts           AsyncStorage persistence
+  state/                   Trip state and the useTripAgent hook
+  data/demo.ts             Precomputed KL activity and sanctuary pools
+backend/                   FastAPI + Supabase scaffold (follow-up, not wired up)
 ```
 
 ## Design direction
