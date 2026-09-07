@@ -19,6 +19,23 @@ function extractMember(prompt: string): string | undefined {
   return skip.includes(name.toLowerCase()) ? 'me' : name;
 }
 
+/**
+ * "log RM 20 rogue spend for Aina" — the owner of a personal charge. Matched
+ * against the original casing so "for coffee" stays a description, not a name.
+ */
+function extractRogueOwner(prompt: string): string | undefined {
+  const match = prompt.match(/\b(?:for|by|on behalf of)\s+(me|myself|[A-Z][a-z'-]+)\b/);
+  const name = match?.[1];
+  if (!name) return undefined;
+  return /^(me|myself)$/i.test(name) ? 'me' : name;
+}
+
+function extractDay(prompt: string): 'today' | 'tomorrow' | undefined {
+  if (/\btomorrow\b/.test(prompt)) return 'tomorrow';
+  if (/\b(today|tonight)\b/.test(prompt)) return 'today';
+  return undefined;
+}
+
 function extractDescription(prompt: string): string | undefined {
   const match = prompt.match(/\bfor\s+([a-z][\w\s'-]{1,40})$/i);
   return match?.[1]?.trim();
@@ -66,7 +83,11 @@ export function parseIntentWithKeywords(prompt: string): Intent {
   if (/\b(rogue|personal|my own|solo|myself)\b/.test(text) && amount !== undefined) {
     return {
       tool: 'add_rogue_spend',
-      args: { amount, member: extractMember(text) ?? 'me', description: extractDescription(prompt) },
+      args: {
+        amount,
+        member: extractMember(text) ?? extractRogueOwner(prompt) ?? 'me',
+        description: extractDescription(prompt),
+      },
       confidence: 0.8,
     };
   }
@@ -80,7 +101,7 @@ export function parseIntentWithKeywords(prompt: string): Intent {
   }
 
   if (/\b(plan|itinerary|schedule|ghost block|anchor|tomorrow|today)\b/.test(text)) {
-    return { tool: 'plan_day', args: {}, confidence: 0.75 };
+    return { tool: 'plan_day', args: { day: extractDay(text) }, confidence: 0.75 };
   }
 
   if (/\b(ledger|spend|burn|totals?|owe|balance|money)\b/.test(text)) {

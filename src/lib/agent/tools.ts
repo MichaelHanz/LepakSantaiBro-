@@ -1,5 +1,5 @@
 import type { ResultCard, Intent, ToolName } from './types';
-import type { EjectEvent, Member } from '../../types';
+import type { EjectEvent, Member, Trip } from '../../types';
 import { currentMember, findMember, type TripState } from '../../state/tripState';
 import {
   addRogueSpend,
@@ -43,10 +43,45 @@ function minutesOfDay(now: Date): number {
   return now.getHours() * 60 + now.getMinutes();
 }
 
-function resolveMember(state: TripState, query: string | undefined): Member {
-  if (!query || query === 'me') return currentMember(state);
-  return findMember(state, query) ?? currentMember(state);
+type MemberLookup = { member: Member } | { unknown_name: string };
+
+/** An unmatched explicit name must never silently fall back to the requester. */
+function resolveMember(state: TripState, query: string | undefined): MemberLookup {
+  const name = query?.trim() ?? '';
+  const needle = name.toLowerCase();
+  if (!needle || needle === 'me' || needle === 'myself') return { member: currentMember(state) };
+  const found = findMember(state, needle);
+  return found ? { member: found } : { unknown_name: name };
 }
+
+function unknownMemberOutcome(
+  state: TripState,
+  tool: ToolName,
+  name: string,
+): ToolOutcome {
+  const roster = state.members.map((m) => m.display_name).join(', ');
+  return {
+    state,
+    tool,
+    facts: `unknown_member=${name}; roster=${roster}`,
+    fallbackText: `I do not have anyone called "${name}" on this trip. It is ${roster} — who did you mean?`,
+  };
+}
+
+function tripDayCount(trip: Trip): number {
+  const start = Date.parse(trip.start_date);
+  const end = Date.parse(trip.end_date);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return 1;
+  return Math.floor((end - start) / 86_400_000) + 1;
+}
+
+function resolveDay(state: TripState, day: Intent['args']['day']): number {
+  if (day !== 'tomorrow') return state.plan.day;
+  return Math.min(state.plan.day + 1, tripDayCount(state.trip));
+}
+
+const isPositive = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
 
 function safeLimitTool(state: TripState): ToolOutcome {
   const safeLimit = calculateGroupSafeLimit(state.members);
@@ -85,7 +120,7 @@ function ledgerStatusTool(state: TripState): ToolOutcome {
 
 function communalExpenseTool(state: TripState, intent: Intent): ToolOutcome {
   const amount = intent.args.amount;
-  if (amount === undefined || amount <= 0) {
+  if (!isPositive(amount)) {
     return {
       state,
       tool: 'propose_communal_expense',
@@ -118,8 +153,12 @@ function communalExpenseTool(state: TripState, intent: Intent): ToolOutcome {
 
 function rogueSpendTool(state: TripState, intent: Intent): ToolOutcome {
   const amount = intent.args.amount;
-  const member = resolveMember(state, intent.args.member);
-  if (amount === undefined || amount <= 0) {
+  const lookup = resolveMember(state, intent.args.member);
+  if ('unknown_name' in lookup) {
+    return unknownMemberOutcome(state, 'add_rogue_spend', lookup.unknown_name);
+  }
+  const member = lookup.member;
+  if (!isPositive(amount)) {
     return {
       state,
       tool: 'add_rogue_spend',
@@ -148,7 +187,11 @@ function rogueSpendTool(state: TripState, intent: Intent): ToolOutcome {
 }
 
 function ejectTool(state: TripState, intent: Intent, now: Date): ToolOutcome {
-  const member = resolveMember(state, intent.args.member);
+  const lookup = resolveMember(state, intent.args.member);
+  if ('unknown_name' in lookup) {
+    return unknownMemberOutcome(state, 'find_ejection_route', lookup.unknown_name);
+  }
+  const member = lookup.member;
   const safeLimit = calculateGroupSafeLimit(state.members);
   const remainingBudget = remainingBudgetFor(
     state.ledger,
@@ -200,27 +243,63 @@ function ejectTool(state: TripState, intent: Intent, now: Date): ToolOutcome {
   };
 }
 
-function planDayTool(state: TripState): ToolOutcome {
+function planDayTool(state: TripState, intent: Intent): ToolOutcome {
   const safeLimit = calculateGroupSafeLimit(state.members);
-  const plan = buildDayPlan(state.plan.day, KL_ACTIVITY_POOL, safeLimit);
+  const day = resolveDay(state, intent.args.day);
+  const plan = buildDayPlan(day, KL_ACTIVITY_POOL, safeLimit);
   const splits = splitGhostBlocks(plan, state.members);
+  // Only the day the group is actually living becomes the active plan; looking
+  // ahead must not advance it.
+  const isCurrentDay = day === state.plan.day;
+  const lastDay = intent.args.day === 'tomorrow' && isCurrentDay;
+  const anchorNote = plan.anchor_nodes.length
+    ? `${plan.anchor_nodes.length} anchor nodes holding the group together`
+    : 'no anchor nodes — the lowest social battery cannot cover one';
 
   return {
-    state: { ...state, plan },
+    state: isCurrentDay ? { ...state, plan } : state,
     tool: 'plan_day',
-    facts: `anchors=${plan.anchor_nodes.length}; ghost_blocks=${plan.ghost_blocks.length}; max_group_hours=${safeLimit.max_group_hours}`,
-    fallbackText: `Day ${plan.day}: ${plan.anchor_nodes.length} anchor nodes holding the group together, ${plan.ghost_blocks.length} ghost blocks split by pace.`,
+    facts: `day=${plan.day}; requested=${intent.args.day ?? 'today'}; anchors=${plan.anchor_nodes.length}; ghost_blocks=${plan.ghost_blocks.length}; max_group_hours=${safeLimit.max_group_hours}${lastDay ? '; clamped_to_last_day=true' : ''}`,
+    fallbackText: `${lastDay ? `Day ${plan.day} is the last day of the trip, so here it is again: ` : `Day ${plan.day}: `}${anchorNote}, ${plan.ghost_blocks.length} ghost blocks split by pace.`,
     card: { kind: 'itinerary', plan, splits },
   };
 }
 
 function setConstraintsTool(state: TripState, intent: Intent): ToolOutcome {
   const me = currentMember(state);
+  const { max_daily_budget, social_battery_hours, pace_preference } = intent.args;
+  const invalid =
+    (max_daily_budget !== undefined && !isPositive(max_daily_budget)) ||
+    (social_battery_hours !== undefined && !isPositive(social_battery_hours));
+
+  if (invalid) {
+    return {
+      state,
+      tool: 'set_my_constraints',
+      facts: 'invalid_constraint=true',
+      fallbackText:
+        'A budget or battery has to be a positive number — one bad value would become the whole group’s ceiling. Try again with real figures.',
+    };
+  }
+
+  if (
+    max_daily_budget === undefined &&
+    social_battery_hours === undefined &&
+    pace_preference === undefined
+  ) {
+    return {
+      state,
+      tool: 'set_my_constraints',
+      facts: 'missing_constraint=true',
+      fallbackText: 'Tell me what to set — a daily budget, a social battery in hours, or a pace.',
+    };
+  }
+
   const updated: Member = {
     ...me,
-    max_daily_budget: intent.args.max_daily_budget ?? me.max_daily_budget,
-    social_battery_hours: intent.args.social_battery_hours ?? me.social_battery_hours,
-    pace_preference: intent.args.pace_preference ?? me.pace_preference,
+    max_daily_budget: max_daily_budget ?? me.max_daily_budget,
+    social_battery_hours: social_battery_hours ?? me.social_battery_hours,
+    pace_preference: pace_preference ?? me.pace_preference,
   };
   const members = state.members.map((m) => (m.user_id === me.user_id ? updated : m));
   const safeLimit = calculateGroupSafeLimit(members);
@@ -266,7 +345,7 @@ export function runTool(state: TripState, intent: Intent, now: Date = new Date()
     case 'find_ejection_route':
       return ejectTool(state, intent, now);
     case 'plan_day':
-      return planDayTool(state);
+      return planDayTool(state, intent);
     case 'set_my_constraints':
       return setConstraintsTool(state, intent);
     case 'help':

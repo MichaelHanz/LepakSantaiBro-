@@ -23,7 +23,8 @@ budgets, ledger totals and ejection scoring are computed by deterministic code.
 Tools: ${TOOL_NAMES.join(', ')}.
 Argument keys: amount (number), member (name or "me"), description (string),
 max_daily_budget (number), social_battery_hours (number),
-pace_preference ("pacesetter"|"spectator").
+pace_preference ("pacesetter"|"spectator"), day ("today"|"tomorrow").
+Numbers must be JSON numbers, never strings.
 Reply with JSON only: {"tool": "...", "args": {...}}`;
 
 export const llmAvailable = Boolean(GEMINI_KEY || GROQ_KEY);
@@ -109,13 +110,58 @@ function extractJson(text: string): unknown {
   }
 }
 
+const positiveNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+
+const nonEmptyString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+/**
+ * Model output is untrusted: a string "60" would turn later ledger additions
+ * into string concatenation, so every argument is schema-checked and a
+ * malformed one rejects the whole intent back to the keyword parser.
+ */
+function validateArgs(raw: Record<string, unknown>): Intent['args'] | null {
+  const args: Intent['args'] = {};
+  const numbers = ['amount', 'max_daily_budget', 'social_battery_hours'] as const;
+  for (const key of numbers) {
+    if (raw[key] === undefined || raw[key] === null) continue;
+    const value = positiveNumber(raw[key]);
+    if (value === null) return null;
+    args[key] = value;
+  }
+
+  for (const key of ['member', 'description'] as const) {
+    if (raw[key] === undefined || raw[key] === null) continue;
+    const value = nonEmptyString(raw[key]);
+    if (value === null) return null;
+    args[key] = value;
+  }
+
+  if (raw.pace_preference !== undefined && raw.pace_preference !== null) {
+    if (raw.pace_preference !== 'pacesetter' && raw.pace_preference !== 'spectator') return null;
+    args.pace_preference = raw.pace_preference;
+  }
+
+  if (raw.day !== undefined && raw.day !== null) {
+    if (raw.day !== 'today' && raw.day !== 'tomorrow') return null;
+    args.day = raw.day;
+  }
+
+  return args;
+}
+
 function coerceIntent(raw: unknown): Intent | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const record = raw as { tool?: unknown; args?: unknown };
   const tool = TOOL_NAMES.find((name) => name === record.tool);
   if (!tool) return null;
-  const args = (typeof record.args === 'object' && record.args !== null ? record.args : {}) as
-    Intent['args'];
+  const rawArgs =
+    typeof record.args === 'object' && record.args !== null
+      ? (record.args as Record<string, unknown>)
+      : {};
+  const args = validateArgs(rawArgs);
+  if (!args) return null;
   return { tool, args, confidence: 0.95 };
 }
 

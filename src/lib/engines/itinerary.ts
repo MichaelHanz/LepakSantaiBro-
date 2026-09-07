@@ -37,7 +37,8 @@ function pickActivity(
 /**
  * SPEC.md 2.2 — 2-3 mandatory anchor nodes with deliberately split ghost blocks
  * in between. Anchors are trimmed so mandatory shared hours never exceed the
- * group's `max_group_hours` (the lowest social battery in the group).
+ * group's `max_group_hours` (the lowest social battery in the group); a group
+ * whose battery cannot cover a single anchor gets a fully ghosted day.
  */
 export function buildDayPlan(
   day: number,
@@ -45,10 +46,9 @@ export function buildDayPlan(
   safeLimit: GroupSafeLimit,
   hoursPerAnchor = 1.5,
 ): DayPlan {
-  const maxAnchors = Math.max(
-    1,
-    Math.min(pool.anchors.length, Math.floor(safeLimit.max_group_hours / hoursPerAnchor)),
-  );
+  const affordableAnchors =
+    hoursPerAnchor > 0 ? Math.floor(safeLimit.max_group_hours / hoursPerAnchor) : pool.anchors.length;
+  const maxAnchors = Math.max(0, Math.min(pool.anchors.length, affordableAnchors));
   const anchors = [...pool.anchors]
     .sort((a, b) => parseClockMinutes(a.time) - parseClockMinutes(b.time))
     .slice(0, maxAnchors);

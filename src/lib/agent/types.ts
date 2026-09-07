@@ -28,6 +28,7 @@ export interface Intent {
     max_daily_budget?: number;
     social_battery_hours?: number;
     pace_preference?: 'pacesetter' | 'spectator';
+    day?: 'today' | 'tomorrow';
     now?: string;
   };
   confidence: number;

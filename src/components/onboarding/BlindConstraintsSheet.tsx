@@ -14,6 +14,7 @@ interface Props {
   visible: boolean;
   submittedCount: number;
   memberCount: number;
+  disabled?: boolean;
   onClose: () => void;
   onSubmit: (input: ConstraintsInput) => void;
 }
@@ -26,6 +27,7 @@ export function BlindConstraintsSheet({
   visible,
   submittedCount,
   memberCount,
+  disabled,
   onClose,
   onSubmit,
 }: Props) {
@@ -34,6 +36,7 @@ export function BlindConstraintsSheet({
   const [pace, setPace] = useState<PacePreference>('spectator');
 
   const submit = () => {
+    if (disabled) return;
     const budgetValue = Number(budget);
     const batteryValue = Number(battery);
     if (!Number.isFinite(budgetValue) || budgetValue <= 0) return;

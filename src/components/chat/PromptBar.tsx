@@ -6,9 +6,10 @@ import { colors, radii } from '../../theme';
 interface Props {
   onSend: (prompt: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-export function PromptBar({ onSend, disabled }: Props) {
+export function PromptBar({ onSend, disabled, placeholder }: Props) {
   const [value, setValue] = useState('');
 
   const submit = () => {
@@ -24,9 +25,10 @@ export function PromptBar({ onSend, disabled }: Props) {
         value={value}
         onChangeText={setValue}
         onSubmitEditing={submit}
-        placeholder="Ask the mediator anything…"
+        placeholder={placeholder ?? 'Ask the mediator anything…'}
         placeholderTextColor="#a5b0aa"
         style={styles.input}
+        editable={!disabled}
         multiline
         returnKeyType="send"
         blurOnSubmit

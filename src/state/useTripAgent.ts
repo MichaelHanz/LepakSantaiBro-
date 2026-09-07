@@ -33,17 +33,30 @@ export function useTripAgent(): TripAgent {
   const [hydrated, setHydrated] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const hydratedRef = useRef(false);
+  const busyRef = useRef(false);
 
+  // Hydration is the single authoritative transition from initial to restored
+  // state: nothing may act on (or overwrite) the ledger until it lands.
   useEffect(() => {
     let active = true;
     loadTripState().then((restored) => {
       if (!active) return;
+      stateRef.current = restored;
+      hydratedRef.current = true;
       setState(restored);
       setHydrated(true);
     });
     return () => {
       active = false;
     };
+  }, []);
+
+  /** One agent turn at a time, so no completion writes over a stale snapshot. */
+  const claimTurn = useCallback((): boolean => {
+    if (!hydratedRef.current || busyRef.current) return false;
+    busyRef.current = true;
+    return true;
   }, []);
 
   useEffect(() => {
@@ -79,37 +92,49 @@ export function useTripAgent(): TripAgent {
   const send = useCallback(
     async (prompt: string) => {
       const trimmed = prompt.trim();
-      if (!trimmed || stateRef.current === undefined) return;
+      if (!trimmed || !claimTurn()) return;
       void Haptics.selectionAsync();
-      await dispatchPrompt(trimmed);
+      try {
+        await dispatchPrompt(trimmed);
+      } finally {
+        busyRef.current = false;
+      }
     },
-    [dispatchPrompt],
+    [claimTurn, dispatchPrompt],
   );
 
   // Constraints bypass the transcript echo: the raw numbers stay private and
   // only the aggregate reaches the conversation (SPEC.md 2.1).
-  const submitConstraints = useCallback<TripAgent['submitConstraints']>(async (input) => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const outcome = runTool(stateRef.current, {
-      tool: 'set_my_constraints',
-      args: input,
-      confidence: 1,
-    });
-    stateRef.current = outcome.state;
-    setState(outcome.state);
-    setMessages((prev) => [
-      ...prev,
-      { id: nextMessageId('user'), role: 'user', text: 'Submitted my constraints privately.' },
-      {
-        id: nextMessageId('agent'),
-        role: 'agent',
-        text: outcome.fallbackText,
-        card: outcome.card,
-        tool: outcome.tool,
-        source: 'keyword',
-      },
-    ]);
-  }, []);
+  const submitConstraints = useCallback<TripAgent['submitConstraints']>(
+    async (input) => {
+      if (!claimTurn()) return;
+      try {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        const outcome = runTool(stateRef.current, {
+          tool: 'set_my_constraints',
+          args: input,
+          confidence: 1,
+        });
+        stateRef.current = outcome.state;
+        setState(outcome.state);
+        setMessages((prev) => [
+          ...prev,
+          { id: nextMessageId('user'), role: 'user', text: 'Submitted my constraints privately.' },
+          {
+            id: nextMessageId('agent'),
+            role: 'agent',
+            text: outcome.fallbackText,
+            card: outcome.card,
+            tool: outcome.tool,
+            source: 'keyword',
+          },
+        ]);
+      } finally {
+        busyRef.current = false;
+      }
+    },
+    [claimTurn],
+  );
 
   return { state, messages, thinking, hydrated, send, submitConstraints };
 }

@@ -19,6 +19,13 @@ export function ItineraryCard({ plan, splits }: Props) {
         </Text>
       </View>
 
+      {plan.anchor_nodes.length === 0 ? (
+        <Text style={styles.anchorMeta}>
+          No fusion points today — the lowest social battery cannot cover one, so the day stays
+          fully ghosted.
+        </Text>
+      ) : null}
+
       {plan.anchor_nodes.map((anchor) => (
         <View key={`${anchor.time}-${anchor.activity}`} style={styles.anchorRow}>
           <Text style={styles.anchorTime}>{anchor.time}</Text>

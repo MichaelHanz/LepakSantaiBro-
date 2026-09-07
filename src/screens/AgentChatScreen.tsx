@@ -11,7 +11,7 @@ import { useTripAgent } from '../state/useTripAgent';
 import { colors } from '../theme';
 
 export function AgentChatScreen() {
-  const { state, messages, thinking, send, submitConstraints } = useTripAgent();
+  const { state, messages, thinking, hydrated, send, submitConstraints } = useTripAgent();
   const [constraintsOpen, setConstraintsOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -29,7 +29,7 @@ export function AgentChatScreen() {
       <ChatHeader
         trip={state.trip}
         safeLimit={safeLimit}
-        onOpenConstraints={() => setConstraintsOpen(true)}
+        onOpenConstraints={hydrated ? () => setConstraintsOpen(true) : undefined}
       />
 
       <KeyboardAvoidingView
@@ -45,13 +45,21 @@ export function AgentChatScreen() {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         >
           {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} onPickExample={handleSend} />
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onPickExample={hydrated && !thinking ? handleSend : undefined}
+            />
           ))}
           {thinking ? <ThinkingBubble /> : null}
         </ScrollView>
 
         <View>
-          <PromptBar onSend={handleSend} disabled={thinking} />
+          <PromptBar
+            onSend={handleSend}
+            disabled={thinking || !hydrated}
+            placeholder={hydrated ? undefined : 'Restoring the trip ledger…'}
+          />
         </View>
       </KeyboardAvoidingView>
 
@@ -59,6 +67,7 @@ export function AgentChatScreen() {
         visible={constraintsOpen}
         submittedCount={state.submitted_member_ids.length}
         memberCount={state.members.length}
+        disabled={!hydrated || thinking}
         onClose={() => setConstraintsOpen(false)}
         onSubmit={(input) => {
           void submitConstraints(input);

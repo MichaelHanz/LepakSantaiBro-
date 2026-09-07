@@ -1,4 +1,4 @@
-import { buildDayPlan, nextAnchorNode, splitGhostBlocks } from '../itinerary';
+import { buildDayPlan, groupHoursForAnchors, nextAnchorNode, splitGhostBlocks } from '../itinerary';
 import type { ActivityPool } from '../itinerary';
 import type { GroupSafeLimit, Member } from '../../../types';
 
@@ -37,10 +37,19 @@ describe('buildDayPlan', () => {
     expect(plan.anchor_nodes.map((a) => a.time)).toEqual(['13:00', '20:00']);
   });
 
-  it('always keeps at least one anchor node', () => {
+  it('ghosts the whole day when the battery cannot cover a single anchor', () => {
     const plan = buildDayPlan(1, pool, { daily_budget_ceiling: 80, max_group_hours: 0.5 });
 
-    expect(plan.anchor_nodes).toHaveLength(1);
+    expect(plan.anchor_nodes).toHaveLength(0);
+    expect(plan.ghost_blocks).toHaveLength(1);
+  });
+
+  it('never schedules more mandatory shared hours than the group limit', () => {
+    for (const max_group_hours of [0, 0.5, 1.5, 3, 4.5, 6]) {
+      const plan = buildDayPlan(1, pool, { daily_budget_ceiling: 80, max_group_hours });
+
+      expect(groupHoursForAnchors(plan.anchor_nodes)).toBeLessThanOrEqual(max_group_hours);
+    }
   });
 
   it('splits ghost blocks by pace preference', () => {

@@ -6,7 +6,7 @@ import { colors, radii } from '../../theme';
 interface Props {
   trip: Trip;
   safeLimit: GroupSafeLimit;
-  onOpenConstraints: () => void;
+  onOpenConstraints?: () => void;
 }
 
 export function ChatHeader({ trip, safeLimit, onOpenConstraints }: Props) {
