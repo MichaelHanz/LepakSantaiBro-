@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import type { PacePreference } from '../../types';
 import { colors, radii } from '../../theme';
+import { linkTelegramAccount } from '../../lib/telegram';
 
 export interface ConstraintsInput {
   max_daily_budget: number;
@@ -34,6 +35,11 @@ export function BlindConstraintsSheet({
   const [budget, setBudget] = useState('');
   const [battery, setBattery] = useState('');
   const [pace, setPace] = useState<PacePreference>('spectator');
+
+  const linkTelegram = () => {
+    // Assuming a mock user ID for the demo if none is passed in props
+    linkTelegramAccount('demo_user_id');
+  };
 
   const submit = () => {
     if (disabled) return;
@@ -105,6 +111,10 @@ export function BlindConstraintsSheet({
           <Pressable style={styles.submit} onPress={submit}>
             <Ionicons name="shield-checkmark-outline" size={18} color={colors.onInk} />
             <Text style={styles.submitText}>Submit privately</Text>
+          </Pressable>
+          <Pressable style={styles.telegramLink} onPress={linkTelegram}>
+            <Ionicons name="paper-plane" size={16} color={colors.teal} />
+            <Text style={styles.telegramText}>Link Telegram for live updates</Text>
           </Pressable>
           <Pressable style={styles.cancel} onPress={onClose}>
             <Text style={styles.cancelText}>Not now</Text>
@@ -226,9 +236,26 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: colors.onInk,
   },
+  telegramLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.teal,
+    borderRadius: radii.md,
+  },
+  telegramText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.teal,
+  },
   cancel: {
     alignItems: 'center',
     paddingVertical: 12,
+    marginTop: 4,
   },
   cancelText: {
     fontSize: 13.5,
