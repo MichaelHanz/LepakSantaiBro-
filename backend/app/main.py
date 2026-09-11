@@ -22,8 +22,16 @@ from .engines import (
     find_ejection_route,
     propose_communal_expense,
 )
+from .telegram import router as telegram_router
+from .eject import router as eject_router
+from .rag import router as rag_router
 
 app = FastAPI(title="Group Trip Mediator")
+app.include_router(telegram_router)
+app.include_router(eject_router)
+app.include_router(rag_router)
+
+
 
 # In-memory stores; swap for Supabase (backend/schema.sql) when persistence lands.
 LEDGERS: dict[str, Ledger] = {}
