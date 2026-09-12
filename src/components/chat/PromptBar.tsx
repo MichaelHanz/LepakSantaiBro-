@@ -26,7 +26,7 @@ export function PromptBar({ onSend, disabled, placeholder }: Props) {
         onChangeText={setValue}
         onSubmitEditing={submit}
         placeholder={placeholder ?? 'Ask the mediator anything…'}
-        placeholderTextColor="#a5b0aa"
+        placeholderTextColor={colors.muted}
         style={styles.input}
         editable={!disabled}
         multiline
@@ -35,11 +35,11 @@ export function PromptBar({ onSend, disabled, placeholder }: Props) {
       />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Send prompt"
+        accessibilityLabel="Send"
         style={[styles.send, (disabled || !value.trim()) && styles.sendDisabled]}
         onPress={submit}
       >
-        <Ionicons name="arrow-up" size={19} color={colors.onInk} />
+        <Ionicons name="arrow-up" size={18} color={colors.onInk} />
       </Pressable>
     </View>
   );
@@ -49,37 +49,35 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 9,
-    paddingHorizontal: 14,
+    gap: 8,
+    paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 12,
-    backgroundColor: colors.cream,
-    borderTopWidth: 1,
+    paddingBottom: 14,
+    backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.line,
   },
   input: {
     flex: 1,
     maxHeight: 120,
     minHeight: 44,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radii.lg,
-    paddingHorizontal: 15,
+    backgroundColor: colors.cream,
+    borderRadius: 22,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
-    fontSize: 14.5,
+    fontSize: 15,
     color: colors.ink,
   },
   send: {
     width: 44,
     height: 44,
-    borderRadius: 16,
+    borderRadius: 22,
     backgroundColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendDisabled: {
-    backgroundColor: '#9bb3ad',
+    backgroundColor: colors.line,
   },
 });

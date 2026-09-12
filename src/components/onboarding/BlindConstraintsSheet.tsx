@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState, useRef } from 'react';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { PacePreference } from '../../types';
 import { colors, radii } from '../../theme';
@@ -24,6 +24,34 @@ interface Props {
  * SPEC.md 2.1 — constraints are collected blind: this sheet only ever shows the
  * current user's own numbers, never anyone else's.
  */
+function SpringButton({ onPress, style, children }: { onPress: () => void; style?: any; children: React.ReactNode }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  
+  const pressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const pressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 4, // Bouncy Apple feel
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  return (
+    <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress}>
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export function BlindConstraintsSheet({
   visible,
   submittedCount,
@@ -96,7 +124,7 @@ export function BlindConstraintsSheet({
           <Text style={styles.label}>PACE</Text>
           <View style={styles.paceRow}>
             {(['pacesetter', 'spectator'] as PacePreference[]).map((option) => (
-              <Pressable
+              <SpringButton
                 key={option}
                 style={[styles.paceOption, pace === option && styles.paceOptionActive]}
                 onPress={() => setPace(option)}
@@ -104,18 +132,18 @@ export function BlindConstraintsSheet({
                 <Text style={[styles.paceText, pace === option && styles.paceTextActive]}>
                   {option}
                 </Text>
-              </Pressable>
+              </SpringButton>
             ))}
           </View>
 
-          <Pressable style={styles.submit} onPress={submit}>
+          <SpringButton style={styles.submit} onPress={submit}>
             <Ionicons name="shield-checkmark-outline" size={18} color={colors.onInk} />
             <Text style={styles.submitText}>Submit privately</Text>
-          </Pressable>
-          <Pressable style={styles.telegramLink} onPress={linkTelegram}>
+          </SpringButton>
+          <SpringButton style={styles.telegramLink} onPress={linkTelegram}>
             <Ionicons name="paper-plane" size={16} color={colors.teal} />
             <Text style={styles.telegramText}>Link Telegram for live updates</Text>
-          </Pressable>
+          </SpringButton>
           <Pressable style={styles.cancel} onPress={onClose}>
             <Text style={styles.cancelText}>Not now</Text>
           </Pressable>
@@ -128,23 +156,26 @@ export function BlindConstraintsSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(20,38,34,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.card,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
-    padding: 20,
-    paddingBottom: 28,
+    padding: 24,
+    paddingBottom: 32,
+    borderTopWidth: 1,
+    borderColor: colors.line,
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(30px) saturate(180%)' as any } : {}),
   },
   handle: {
     alignSelf: 'center',
-    width: 42,
-    height: 4,
-    borderRadius: 2,
+    width: 48,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: colors.line,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   badge: {
     alignSelf: 'flex-start',
@@ -152,60 +183,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.mint,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
   badgeText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 0.9,
+    letterSpacing: 1.5,
     color: colors.teal,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
-    letterSpacing: -0.6,
+    letterSpacing: -1,
     color: colors.ink,
-    marginTop: 12,
+    marginTop: 16,
   },
   copy: {
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.inkSoft,
     marginTop: 6,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 1.1,
+    letterSpacing: 1.5,
     color: colors.muted,
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 16,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: radii.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontWeight: '700',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.ink,
   },
   paceRow: {
     flexDirection: 'row',
-    gap: 9,
+    gap: 12,
   },
   paceOption: {
     flex: 1,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255,255,255,0.02)',
     borderRadius: radii.sm,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   paceOptionActive: {
@@ -213,9 +244,9 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
   },
   paceText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    color: colors.muted,
+    color: colors.inkSoft,
     textTransform: 'capitalize',
   },
   paceTextActive: {
@@ -225,41 +256,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
     backgroundColor: colors.teal,
     borderRadius: radii.md,
-    paddingVertical: 15,
-    marginTop: 20,
+    paddingVertical: 16,
+    marginTop: 24,
   },
   submitText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '900',
     color: colors.onInk,
+    letterSpacing: -0.3,
   },
   telegramLink: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
-    marginTop: 8,
+    gap: 8,
+    paddingVertical: 16,
+    marginTop: 12,
     borderWidth: 1,
-    borderColor: colors.teal,
+    borderColor: 'rgba(0, 240, 181, 0.3)',
     borderRadius: radii.md,
+    backgroundColor: 'rgba(0, 240, 181, 0.05)',
   },
   telegramText: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors.teal,
   },
   cancel: {
     alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 4,
+    paddingVertical: 14,
+    marginTop: 8,
   },
   cancelText: {
-    fontSize: 13.5,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: colors.muted,
   },
 });

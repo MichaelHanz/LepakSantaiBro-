@@ -1,14 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../../theme';
 
 export function ThinkingBubble() {
   return (
     <View style={styles.row}>
       <View style={styles.avatar}>
-        <MaterialCommunityIcons name="scale-balance" size={15} color={colors.mint} />
+        <Text style={styles.avatarText}>M</Text>
       </View>
-      <Text style={styles.text}>Routing to a tool…</Text>
+      <Text style={styles.text}>Thinking…</Text>
     </View>
   );
 }
@@ -23,13 +22,18 @@ const styles = StyleSheet.create({
   avatar: {
     width: 28,
     height: 28,
-    borderRadius: 10,
-    backgroundColor: colors.ink,
+    borderRadius: 14,
+    backgroundColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarText: {
+    color: colors.onInk,
+    fontSize: 13,
+    fontWeight: '700',
+  },
   text: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontStyle: 'italic',
     color: colors.muted,
   },

@@ -12,7 +12,7 @@ export function HelpCard({ examples, onPick }: Props) {
       {examples.map((example) => (
         <Pressable
           key={example}
-          style={styles.chip}
+          style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
           onPress={onPick ? () => onPick(example) : undefined}
         >
           <Text style={styles.chipText}>{example}</Text>
@@ -26,20 +26,24 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 7,
+    gap: 8,
     marginTop: 10,
   },
   chip: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radii.sm,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  chipPressed: {
+    backgroundColor: colors.mint,
+    borderColor: colors.teal,
   },
   chipText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.ink,
   },
 });

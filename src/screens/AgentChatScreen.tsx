@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChatHeader } from '../components/chat/ChatHeader';
 import { MessageBubble } from '../components/chat/MessageBubble';
@@ -80,14 +80,17 @@ export function AgentChatScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.cream,
+    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
   },
   transcript: {
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
 });
