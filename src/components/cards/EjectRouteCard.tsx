@@ -18,9 +18,11 @@ export function EjectRouteCard({ member, route, remainingBudget, anchorImpact }:
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Ionicons name="exit" size={15} color={colors.coral} />
+        <View style={styles.iconContainer}>
+          <Ionicons name="exit" size={16} color={colors.coral} />
+        </View>
         <Text style={styles.header}>
-          EJECT · {member.display_name.toUpperCase()} · {fallback ? 'CHEAPEST FALLBACK' : 'WEIGHTED SCORE'}
+          Eject Route for {member.display_name}
         </Text>
       </View>
 
@@ -28,54 +30,32 @@ export function EjectRouteCard({ member, route, remainingBudget, anchorImpact }:
         <View style={styles.destinationBody}>
           <Text style={styles.name}>{route.node.name}</Text>
           <Text style={styles.meta}>
-            {route.node.travel_time_minutes} min · {money(route.node.estimated_cost)} ·{' '}
-            {route.node.distance_km} km
+            {route.node.travel_time_minutes} mins away
           </Text>
         </View>
-        <Text style={styles.score}>{fallback ? '—' : route.score.toFixed(2)}</Text>
+        <View style={styles.costBadge}>
+          <Text style={styles.costText}>{money(route.node.estimated_cost)}</Text>
+        </View>
       </View>
 
       <Text style={styles.reason}>{route.reason}</Text>
 
-      <View style={styles.budgetRow}>
-        <Text style={styles.budgetLabel}>REMAINING BUDGET</Text>
+      <View style={styles.budgetSection}>
+        <Text style={styles.budgetLabel}>Remaining daily budget</Text>
         <Text style={styles.budgetValue}>{money(remainingBudget)}</Text>
       </View>
 
-      {route.considered.length > 1 ? (
-        <View style={styles.runnersUp}>
-          {route.considered.slice(1, 3).map((entry) => (
-            <View key={entry.node.id} style={styles.runnerRow}>
-              <Text style={styles.runnerName} numberOfLines={1}>
-                {entry.node.name}
-              </Text>
-              <Text style={styles.runnerScore}>{entry.score.toFixed(2)}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
       {anchorImpact ? (
-        <View
-          style={[
-            styles.anchor,
-            anchorImpact.can_make_anchor ? styles.anchorOk : styles.anchorLate,
-          ]}
-        >
+        <View style={[styles.anchor, anchorImpact.can_make_anchor ? styles.anchorOk : styles.anchorLate]}>
           <Ionicons
-            name={anchorImpact.can_make_anchor ? 'people' : 'alarm'}
-            size={14}
+            name={anchorImpact.can_make_anchor ? 'checkmark-circle' : 'warning'}
+            size={18}
             color={anchorImpact.can_make_anchor ? colors.teal : colors.coral}
           />
-          <Text
-            style={[
-              styles.anchorText,
-              anchorImpact.can_make_anchor ? styles.anchorTextOk : styles.anchorTextLate,
-            ]}
-          >
+          <Text style={[styles.anchorText, anchorImpact.can_make_anchor ? styles.anchorTextOk : styles.anchorTextLate]}>
             {anchorImpact.can_make_anchor
-              ? `Rejoins at the ${anchorImpact.anchor.time} ${anchorImpact.anchor.activity.toLowerCase()} fusion point.`
-              : `Cannot make ${anchorImpact.anchor.time} — suggest moving the ${anchorImpact.anchor.activity.toLowerCase()} to ${anchorImpact.suggested_anchor_time}.`}
+              ? `Can rejoin at the ${anchorImpact.anchor.time} ${anchorImpact.anchor.activity.toLowerCase()} fusion point.`
+              : `Cannot make the ${anchorImpact.anchor.time} fusion point. Suggest moving it to ${anchorImpact.suggested_anchor_time}.`}
           </Text>
         </View>
       ) : null}
@@ -85,97 +65,105 @@ export function EjectRouteCard({ member, route, remainingBudget, anchorImpact }:
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.line,
-    padding: 14,
-    marginTop: 10,
-    gap: 10,
+    borderColor: colors.coralSoft,
+    marginTop: 12,
+    padding: 16,
+    shadowColor: colors.coral,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
+    marginBottom: 16,
+  },
+  iconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.coralSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    color: colors.coral,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.ink,
     flex: 1,
   },
   destination: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.cream,
-    borderRadius: 13,
-    padding: 12,
+    borderRadius: radii.md,
+    padding: 16,
+    marginBottom: 12,
   },
   destinationBody: {
     flex: 1,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.ink,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   meta: {
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 3,
+    fontSize: 14,
+    color: colors.inkSoft,
+    marginTop: 4,
   },
-  score: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: colors.teal,
+  costBadge: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  costText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.coral,
   },
   reason: {
-    fontSize: 11.5,
-    lineHeight: 16,
-    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.inkSoft,
+    marginBottom: 16,
   },
-  budgetRow: {
+  budgetSection: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+    marginBottom: 16,
   },
   budgetLabel: {
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 14,
     color: colors.muted,
   },
   budgetValue: {
-    fontSize: 13,
-    fontWeight: '900',
-    color: colors.ink,
-  },
-  runnersUp: {
-    gap: 5,
-  },
-  runnerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  runnerName: {
-    flex: 1,
-    fontSize: 11.5,
-    color: colors.muted,
-  },
-  runnerScore: {
-    fontSize: 11.5,
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.muted,
+    color: colors.ink,
   },
   anchor: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    borderRadius: 11,
-    padding: 10,
+    gap: 12,
+    padding: 16,
+    borderRadius: radii.md,
   },
   anchorOk: {
     backgroundColor: colors.mint,
@@ -185,9 +173,9 @@ const styles = StyleSheet.create({
   },
   anchorText: {
     flex: 1,
-    fontSize: 11.5,
-    lineHeight: 15,
-    fontWeight: '700',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   anchorTextOk: {
     color: colors.teal,

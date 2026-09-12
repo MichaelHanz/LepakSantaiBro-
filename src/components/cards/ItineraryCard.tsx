@@ -13,152 +13,261 @@ export function ItineraryCard({ plan, splits }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Ionicons name="git-branch" size={15} color={colors.teal} />
-        <Text style={styles.header}>
-          DAY {plan.day} · {plan.anchor_nodes.length} ANCHORS · {plan.ghost_blocks.length} GHOST BLOCKS
+        <Text style={styles.header}>Day {plan.day}</Text>
+        <Text style={styles.subHeader}>
+          {plan.anchor_nodes.length} anchors, {plan.ghost_blocks.length} ghost blocks
         </Text>
       </View>
 
       {plan.anchor_nodes.length === 0 ? (
-        <Text style={styles.anchorMeta}>
-          No fusion points today — the lowest social battery cannot cover one, so the day stays
-          fully ghosted.
-        </Text>
+        <View style={styles.emptyState}>
+          <Ionicons name="moon-outline" size={24} color={colors.muted} />
+          <Text style={styles.emptyText}>
+            No fusion points today. The lowest social battery cannot cover one, so the entire day stays ghosted.
+          </Text>
+        </View>
       ) : null}
 
-      {plan.anchor_nodes.map((anchor) => (
-        <View key={`${anchor.time}-${anchor.activity}`} style={styles.anchorRow}>
-          <Text style={styles.anchorTime}>{anchor.time}</Text>
-          <View style={styles.anchorBody}>
-            <Text style={styles.anchorTitle}>
-              {anchor.activity} · {anchor.location}
-            </Text>
-            <Text style={styles.anchorMeta}>Fusion point · RM {anchor.cost_per_member} pp</Text>
+      <View style={styles.timeline}>
+        {plan.anchor_nodes.map((anchor, i) => (
+          <View key={`${anchor.time}-${anchor.activity}`} style={styles.anchorNode}>
+            <View style={styles.timeCol}>
+              <Text style={styles.time}>{anchor.time}</Text>
+            </View>
+            <View style={styles.nodeLine}>
+              <View style={styles.dotTeal} />
+              {i < plan.anchor_nodes.length - 1 && <View style={styles.lineSegment} />}
+            </View>
+            <View style={styles.contentCol}>
+              <Text style={styles.activity}>{anchor.activity}</Text>
+              <Text style={styles.location}>{anchor.location}</Text>
+              <View style={styles.metaBadge}>
+                <Text style={styles.metaText}>Fusion point · RM {anchor.cost_per_member}</Text>
+              </View>
+            </View>
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
 
-      {splits.map(({ block, pacesetters, spectators }) => (
-        <View key={`${block.start}-${block.end}`} style={styles.ghost}>
-          <Text style={styles.ghostTime}>
-            {block.start} — {block.end}
-          </Text>
-          <View style={styles.branch}>
-            <View style={[styles.branchDot, { backgroundColor: colors.lilac }]} />
-            <View style={styles.branchBody}>
-              <Text style={styles.branchLabel}>
-                PACESETTERS · {pacesetters.map((m) => m.display_name).join(', ') || 'nobody'}
-              </Text>
-              <Text style={styles.branchTitle}>
-                {block.pacesetter_activity.type} · {block.pacesetter_activity.location}
-              </Text>
+      {splits.length > 0 && (
+        <View style={styles.splitsSection}>
+          <Text style={styles.sectionTitle}>Ghost Blocks</Text>
+          {splits.map(({ block, pacesetters, spectators }) => (
+            <View key={`${block.start}-${block.end}`} style={styles.ghostBlock}>
+              <View style={styles.ghostHeader}>
+                <Ionicons name="time-outline" size={14} color={colors.muted} />
+                <Text style={styles.ghostTime}>{block.start} — {block.end}</Text>
+              </View>
+              
+              <View style={styles.branches}>
+                <View style={styles.branch}>
+                  <View style={styles.branchHeader}>
+                    <Text style={styles.groupName}>Pacesetters</Text>
+                    <Text style={styles.members}>{pacesetters.map((m) => m.display_name).join(', ') || 'Nobody'}</Text>
+                  </View>
+                  <View style={styles.branchCard}>
+                    <Text style={styles.branchActivity}>{block.pacesetter_activity.type}</Text>
+                    <Text style={styles.branchLocation}>{block.pacesetter_activity.location}</Text>
+                    <Text style={styles.branchCost}>RM {block.pacesetter_activity.estimated_cost}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.branch}>
+                  <View style={styles.branchHeader}>
+                    <Text style={styles.groupName}>Spectators</Text>
+                    <Text style={styles.members}>{spectators.map((m) => m.display_name).join(', ') || 'Nobody'}</Text>
+                  </View>
+                  <View style={[styles.branchCard, styles.branchCardAlt]}>
+                    <Text style={styles.branchActivity}>{block.spectator_activity.type}</Text>
+                    <Text style={styles.branchLocation}>{block.spectator_activity.location}</Text>
+                    <Text style={styles.branchCost}>RM {block.spectator_activity.estimated_cost}</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-            <Text style={styles.branchCost}>RM {block.pacesetter_activity.estimated_cost}</Text>
-          </View>
-          <View style={styles.branch}>
-            <View style={[styles.branchDot, { backgroundColor: colors.coralSoft }]} />
-            <View style={styles.branchBody}>
-              <Text style={styles.branchLabel}>
-                SPECTATORS · {spectators.map((m) => m.display_name).join(', ') || 'nobody'}
-              </Text>
-              <Text style={styles.branchTitle}>
-                {block.spectator_activity.type} · {block.spectator_activity.location}
-              </Text>
-            </View>
-            <Text style={styles.branchCost}>RM {block.spectator_activity.estimated_cost}</Text>
-          </View>
+          ))}
         </View>
-      ))}
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  headerRow: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+    backgroundColor: colors.cream,
+  },
+  header: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.ink,
+  },
+  subHeader: {
+    fontSize: 13,
+    color: colors.inkSoft,
+    marginTop: 2,
+  },
+  emptyState: {
+    padding: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: colors.muted,
+    lineHeight: 20,
+  },
+  timeline: {
+    padding: 16,
+  },
+  anchorNode: {
+    flexDirection: 'row',
+  },
+  timeCol: {
+    width: 50,
+    paddingTop: 2,
+  },
+  time: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.ink,
+  },
+  nodeLine: {
+    width: 20,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  dotTeal: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.teal,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    zIndex: 2,
+    marginTop: 4,
+  },
+  lineSegment: {
+    width: 2,
+    flex: 1,
+    backgroundColor: colors.line,
+    marginTop: -4,
+    marginBottom: -4,
+    zIndex: 1,
+  },
+  contentCol: {
+    flex: 1,
+    paddingBottom: 24,
+  },
+  activity: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.ink,
+  },
+  location: {
+    fontSize: 14,
+    color: colors.inkSoft,
+    marginTop: 2,
+  },
+  metaBadge: {
+    backgroundColor: colors.mint,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  metaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.teal,
+  },
+  splitsSection: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+    backgroundColor: '#FAFAFA',
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.ink,
+    marginBottom: 16,
+  },
+  ghostBlock: {
+    backgroundColor: colors.surface,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: 14,
-    marginTop: 10,
-    gap: 10,
+    padding: 16,
+    marginBottom: 12,
   },
-  headerRow: {
+  ghostHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  header: {
-    flex: 1,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    color: colors.teal,
-  },
-  anchorRow: {
-    flexDirection: 'row',
-    gap: 11,
-    alignItems: 'center',
-  },
-  anchorTime: {
-    width: 46,
-    fontSize: 12,
-    fontWeight: '900',
-    color: colors.ink,
-  },
-  anchorBody: {
-    flex: 1,
-  },
-  anchorTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: colors.ink,
-  },
-  anchorMeta: {
-    fontSize: 11,
-    color: colors.muted,
-    marginTop: 1,
-  },
-  ghost: {
-    backgroundColor: colors.cream,
-    borderRadius: 13,
-    padding: 11,
-    gap: 9,
+    marginBottom: 16,
   },
   ghostTime: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.inkSoft,
+  },
+  branches: {
+    gap: 16,
   },
   branch: {
+    gap: 8,
+  },
+  branchHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
-  branchDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-  },
-  branchBody: {
-    flex: 1,
-  },
-  branchLabel: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    color: colors.muted,
-  },
-  branchTitle: {
-    fontSize: 12.5,
+  groupName: {
+    fontSize: 13,
     fontWeight: '700',
     color: colors.ink,
-    marginTop: 1,
+  },
+  members: {
+    fontSize: 13,
+    color: colors.muted,
+  },
+  branchCard: {
+    backgroundColor: colors.cream,
+    padding: 12,
+    borderRadius: radii.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.teal,
+  },
+  branchCardAlt: {
+    borderLeftColor: colors.coral,
+  },
+  branchActivity: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  branchLocation: {
+    fontSize: 13,
+    color: colors.inkSoft,
+    marginTop: 2,
   },
   branchCost: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.ink,
+    marginTop: 6,
   },
 });

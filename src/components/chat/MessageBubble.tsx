@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import type { ChatMessage } from '../../lib/agent/types';
 import { ResultCardView } from '../cards/ResultCardView';
 import { colors, radii } from '../../theme';
@@ -10,14 +10,14 @@ interface Props {
 }
 
 const TOOL_LABEL: Record<string, string> = {
-  get_group_safe_limit: 'calculate_group_safe_limit()',
-  propose_communal_expense: 'propose_communal_expense()',
-  add_rogue_spend: 'add_rogue_spend()',
-  find_ejection_route: 'find_ejection_route()',
-  plan_day: 'build_day_plan()',
-  set_my_constraints: 'submit_constraints()',
-  get_ledger_status: 'read_ledger()',
-  help: 'help()',
+  get_group_safe_limit: 'Checking safe limit',
+  propose_communal_expense: 'Reviewing expense',
+  add_rogue_spend: 'Logging personal spend',
+  find_ejection_route: 'Finding safe route out',
+  plan_day: 'Building the day plan',
+  set_my_constraints: 'Saving your constraints',
+  get_ledger_status: 'Reading the ledger',
+  help: 'Showing options',
 };
 
 export function MessageBubble({ message, onPickExample }: Props) {
@@ -34,16 +34,13 @@ export function MessageBubble({ message, onPickExample }: Props) {
   return (
     <View style={styles.agentRow}>
       <View style={styles.avatar}>
-        <MaterialCommunityIcons name="scale-balance" size={15} color={colors.mint} />
+        <Text style={styles.avatarText}>M</Text>
       </View>
       <View style={styles.agentBody}>
         {message.tool ? (
           <View style={styles.toolRow}>
-            <MaterialCommunityIcons name="function-variant" size={12} color={colors.muted} />
+            <Ionicons name="cog" size={11} color={colors.muted} />
             <Text style={styles.toolText}>{TOOL_LABEL[message.tool] ?? message.tool}</Text>
-            <Text style={styles.sourceText}>
-              {message.source === 'keyword' ? 'offline parser' : message.source}
-            </Text>
           </View>
         ) : null}
         <Text style={styles.agentText}>{message.text}</Text>
@@ -61,18 +58,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   userBubble: {
-    maxWidth: '86%',
-    backgroundColor: colors.ink,
-    borderRadius: radii.lg,
-    borderBottomRightRadius: 8,
-    paddingVertical: 11,
+    maxWidth: '80%',
+    backgroundColor: colors.teal,
+    borderRadius: 18,
+    borderBottomRightRadius: 6,
+    paddingVertical: 10,
     paddingHorizontal: 14,
   },
   userText: {
     color: colors.onInk,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
+    fontSize: 15,
+    lineHeight: 21,
   },
   agentRow: {
     flexDirection: 'row',
@@ -82,11 +78,16 @@ const styles = StyleSheet.create({
   avatar: {
     width: 28,
     height: 28,
-    borderRadius: 10,
-    backgroundColor: colors.ink,
+    borderRadius: 14,
+    backgroundColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
+  },
+  avatarText: {
+    color: colors.onInk,
+    fontSize: 13,
+    fontWeight: '700',
   },
   agentBody: {
     flex: 1,
@@ -94,26 +95,17 @@ const styles = StyleSheet.create({
   toolRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 5,
+    gap: 4,
+    marginBottom: 4,
   },
   toolText: {
-    fontSize: 10.5,
-    fontWeight: '800',
+    fontSize: 12,
     color: colors.muted,
-    letterSpacing: 0.2,
-  },
-  sourceText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    color: colors.teal,
-    textTransform: 'uppercase',
+    fontStyle: 'italic',
   },
   agentText: {
-    fontSize: 14.5,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 22,
     color: colors.ink,
-    fontWeight: '500',
   },
 });

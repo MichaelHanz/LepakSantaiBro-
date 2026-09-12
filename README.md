@@ -21,8 +21,16 @@ Group trips are rarely ruined by bad locations; they are ruined by **financial a
 *   **Blind Budget Kill Switch:** Members privately submit their absolute maximum daily budget. The app calculates a hidden "Group Safe Limit" and hard-blocks the planner from adding communal activities that breach the lowest threshold. 
 *   **Fission & Fusion Itinerary:** The timeline anchors the group for major events (e.g., Dinner), but injects "Ghost Blocks" where the group is deliberately fractured based on energy pace (Pacesetters go hiking; Spectators go to a cafe).
 *   **The "Eject" Engine:** A 1-click panic button on the live itinerary for when a member burns out. It calculates the walking distance/Grab fare to "Basecamp" (Hotel) and provides a deep link to safely extract the user without requiring a group debate.
-*   **Opt-In Reconvene (Telegram Bot):** We bypassed the massive battery drain of background tracking. Members link their Telegram, and the bot automatically pings them 30 minutes before crucial "Fusion" events to regroup the squad.
+*   **Frictionless Telegram Onboarding:** Downloading a new app just for one trip is massive friction. Members simply click a deep link to our Telegram Bot (`/start`) to instantly authenticate and join the trip. The bot also serves as our "Opt-In Reconvene" system, pinging the squad 30 minutes before crucial "Fusion" events without the battery drain of background location tracking.
 *   **RAG-Lite Anchor Suggestions:** An AI assistant grounded strictly by the Google Places API and the Group Safe Limit, guaranteeing accurate, budget-safe restaurant recommendations.
+
+### How It Works (The User Journey)
+1. **The Setup (Frictionless Entry):** A group of 4 friends decides on a trip. Instead of downloading a heavy app, the trip leader shares a Telegram deep link. The friends click it, instantly joining the trip via the Bot. During this blind onboarding, they each secretly input their maximum daily budget and social battery limit. 
+2. **The Kill Switch:** The app calculates that the lowest budget in the group is RM100/day. This becomes the invisible "Group Safe Limit".
+3. **The Conflict:** Friend A tries to schedule a RM150 Wagyu Dinner for the whole group. The app instantly blocks the addition because it breaches the RM100 limit, preventing a socially awkward confrontation where the poorest friend has to object.
+4. **The Fission:** Instead of forcing everyone to agree, the app suggests a "Fission Block." It splits the group: Friend A and B go to the Wagyu Dinner, while Friend C and D are routed to a budget-safe RM30 cafe nearby. 
+5. **The Fusion:** 30 minutes before they are scheduled to regroup at the hotel, the Telegram Bot automatically pings all 4 members with directions to rendezvous, seamlessly bringing the group back together.
+6. **The Eject:** Later that night, Friend C's social battery dies. Instead of ruining the group's vibe by asking everyone to leave early, Friend C presses the **Eject** button. The app calculates the exact Grab fare back to the hotel and provides a 1-click link to order the ride and safely extract them.
 
 ---
 
@@ -41,10 +49,31 @@ Group trips are rarely ruined by bad locations; they are ruined by **financial a
 
 *We realized early on that tracking every single cent ("Rogue Spend") was a mass surveillance liability. We pivoted to a simpler "Kill Switch" to protect privacy while still solving the budget problem.*
 
-![Ideation Mindmap](insert_mindmap_image_url_here.png)
+```mermaid
+mindmap
+  root((Group Trip Friction))
+    Financial Asymmetry
+      Hidden budget stress
+      Unequal dining preferences
+      Silent resentment
+    Social Burnout
+      Differing energy levels
+      Introvert exhaustion
+      Guilt of leaving early
+    Forced Consensus
+      Lowest common denominator
+      Compromising on interests
+```
 *Our initial mindmap exploring the root causes of group trip arguments, leading us away from geography and toward psychology.*
 
-![User Flow Diagram](insert_user_flow_image_url_here.png)
+```mermaid
+graph TD
+  A[User hits Eject] --> B{Calculate Location}
+  B --> C[Query Google Distance Matrix]
+  C --> D[Determine Route to Basecamp]
+  D --> E[Estimate Grab Fare]
+  E --> F[Generate 1-Click Extraction Link]
+```
 *The flow chart of our "Proxy Eject" engine, ensuring we don't rely on expensive Google API routing, prioritizing user safety by routing straight to Basecamp.*
 
 ### 2.3 Mentor Consultation
@@ -59,21 +88,21 @@ Group trips are rarely ruined by bad locations; they are ruined by **financial a
 
 ## 3. Design & Prototype
 
-**UI Prototype:** [Insert Public Figma/Vercel Link Here] *(Opens in Incognito)*
+**UI Prototype:** This GitHub Repository (Run locally via Expo Web)
 
-*(Embed 4-8 key screenshots here. Example below:)*
+*(Here are screenshots of our final responsive UI running on Expo Web)*
 
-![Blind Onboarding](insert_image_1.png)
-**1. Blind Threshold Onboarding:** Users privately lock in their social battery and absolute budget limits.
+![Blind Onboarding](assets/safe-limit.png)
+**1. Blind Threshold Onboarding:** Users privately lock in their social battery and absolute budget limits. The app displays the lowest common limit to protect everyone.
 
-![Fission UI](insert_image_2.png)
-**2. The Fission Prompt:** The planner attempts to add a RM150 activity. The Kill Switch blocks it and forces the group to split (Fission).
+![Fission UI](assets/itinerary.png)
+**2. The Fission Prompt:** The planner attempts to add a RM150 activity. The Kill Switch blocks it and forces the group to split into "Ghost Blocks" (Fission).
 
-![Eject Modal](insert_image_3.png)
-**3. The Eject Engine:** A user hits their limit. The proxy engine calculates Grab costs and provides a 1-click safe extraction.
+![Eject Modal](assets/eject.png)
+**3. The Eject Engine:** A user hits their limit. The proxy engine calculates Grab costs and provides a safe extraction route.
 
-![RAG-Lite Suggestions](insert_image_4.png)
-**4. Budget-Safe AI Suggestions:** The itinerary planner leverages RAG-Lite to suggest real places that fit the strict Group Safe Limit.
+![Communal Ledger](assets/ledger.png)
+**4. Communal Ledger:** The itinerary planner tracks what is a shared "Communal Burn" versus private "Rogue Spend", keeping the finances perfectly separated.
 
 ---
 
@@ -103,14 +132,42 @@ Group trips are rarely ruined by bad locations; they are ruined by **financial a
 *   **Communication: Telegram Bot API.** Chosen to bypass the strict opt-in rules of iOS Web Push notifications (FCM). It guarantees instant delivery for our "Opt-In Reconvene" pings.
 *   **APIs: Google Maps Distance Matrix & Places API.** Used strictly as proxies to ground our data. Distance Matrix calculates safe extraction times, and Places API feeds accurate data into our RAG-Lite engine.
 *   **AI: Gemini 2.5 Flash.** Used purely as a reasoning engine to filter real-world Places data against strict JSON budgets.
-*   **Hosting:** We chose **Render** for our FastAPI backend due to native Python support, and **Vercel** for the React Native Web build. *Constraint:* We must use ngrok during development for the Telegram webhook because localhost cannot be pinged externally.
+*   **Hosting:** We chose **Render** for our FastAPI backend due to native Python support, and **Vercel** for the React Native Web build. *Constraint:* Because webhooks can't ping localhost during development, we built a custom Long Polling Python script to bridge Telegram's API directly to our local FastAPI server without needing ngrok.
 
 ### System Architecture Diagram
-*(Optional but recommended. Embed an image of how your React Native App talks to FastAPI, Supabase, and the 3rd party APIs)*
-![System Architecture](insert_architecture_diagram.png)
+```mermaid
+graph LR
+  subgraph Frontend
+    RN[React Native/Expo Web]
+  end
+  subgraph Backend
+    FA[FastAPI Python]
+    SB[(Supabase PostgreSQL)]
+  end
+  subgraph External APIs
+    GM[Google Maps API]
+    GP[Google Places API]
+    GEM[Gemini 2.5 Flash]
+    TG[Telegram Bot API]
+  end
+  RN <--> FA
+  RN <--> SB
+  FA <--> SB
+  FA <--> GM
+  FA <--> GP
+  FA <--> GEM
+  FA <--> TG
+```
 
 ### Build Plan & Scope
 To ensure this was feasible in 48 hours, we aggressively scoped down liabilities:
 1.  **No Graph Pathfinding:** We dropped complex A* routing for the Eject engine. We route *only* to a static "Basecamp", reducing API calls from dozens to exactly one.
 2.  **No Continuous Tracking:** We dropped background geolocation. The app only requests location exactly when the user hits "Eject".
 3.  **Flat Array Ledger:** We dropped complex individual "Rogue Spend" tracking. The ledger only tracks communal events in a flat chronological array, making Supabase reads incredibly fast and bug-free.
+
+---
+
+## 6. Future Scalability & Impact
+While built for small friend groups, this architecture has a clear path to wider impact:
+*   **B2B Corporate Retreats:** The "Kill Switch" and "Eject" mechanics are perfectly suited for HR departments managing corporate offsites, where employee energy levels and company budgets must be strictly balanced.
+*   **API Monetization:** The core logic of the "Proxy Eject Engine" can be packaged as an SDK for existing booking platforms (like Agoda or Klook) to offer "Burnout Protection" routing to their users.

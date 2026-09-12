@@ -26,68 +26,79 @@ export function LedgerCard({ ledger, memberCount, safeLimit, lastProposal, rogue
       {lastProposal ? (
         <View style={[styles.verdict, blocked ? styles.verdictBlocked : styles.verdictApproved]}>
           <Ionicons
-            name={blocked ? 'hand-left' : 'checkmark-circle'}
-            size={15}
+            name={blocked ? 'close-circle' : 'checkmark-circle'}
+            size={20}
             color={blocked ? colors.coral : colors.teal}
           />
-          <Text style={[styles.verdictText, blocked && styles.verdictTextBlocked]}>
-            {blocked
-              ? `BLOCKED · ${lastProposal.reason}`
-              : `APPROVED · ${money(lastProposal.per_member_share)} each`}
-          </Text>
+          <View style={styles.verdictBody}>
+            <Text style={[styles.verdictTitle, blocked && styles.verdictTitleBlocked]}>
+              {blocked ? 'Expense Blocked' : 'Expense Approved'}
+            </Text>
+            <Text style={styles.verdictReason}>
+              {blocked ? lastProposal.reason : `${money(lastProposal.per_member_share)} added per person`}
+            </Text>
+          </View>
         </View>
       ) : null}
 
-      <View style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: colors.mint }]}>
-          <Ionicons name="people" size={16} color={colors.teal} />
+      <View style={styles.ledgerContent}>
+        <View style={styles.row}>
+          <View style={styles.iconContainerMint}>
+            <Ionicons name="people" size={18} color={colors.teal} />
+          </View>
+          <View style={styles.rowBody}>
+            <Text style={styles.rowTitle}>Communal burn</Text>
+            <Text style={styles.rowMeta}>{money(perMember)} per person</Text>
+          </View>
+          <Text style={styles.rowValue}>{money(ledger.communal_burn_rate)}</Text>
         </View>
-        <View style={styles.rowBody}>
-          <Text style={styles.rowTitle}>Communal burn</Text>
-          <Text style={styles.rowMeta}>{money(perMember)} per person</Text>
+
+        <View style={styles.hairline} />
+
+        <View style={styles.row}>
+          <View style={styles.iconContainerCoral}>
+            <Ionicons name="person" size={18} color={colors.coral} />
+          </View>
+          <View style={styles.rowBody}>
+            <Text style={styles.rowTitle}>
+              {rogueOwner ? `${rogueOwner.display_name}'s rogue spend` : 'Rogue spend'}
+            </Text>
+            <Text style={styles.rowMeta}>Personal, never pooled</Text>
+          </View>
+          <Text style={styles.rowValue}>{money(rogueTotal)}</Text>
         </View>
-        <Text style={styles.rowValue}>{money(ledger.communal_burn_rate)}</Text>
       </View>
 
-      <View style={styles.hairline} />
-
-      <View style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: colors.coralSoft }]}>
-          <Ionicons name="person" size={16} color={colors.coral} />
-        </View>
-        <View style={styles.rowBody}>
-          <Text style={styles.rowTitle}>
-            {rogueOwner ? `${rogueOwner.display_name} · rogue spend` : 'Rogue spend'}
-          </Text>
-          <Text style={styles.rowMeta}>Personal · never pooled</Text>
-        </View>
-        <Text style={[styles.rowValue, styles.rogueValue]}>{money(rogueTotal)}</Text>
+      <View style={styles.footer}>
+        <Text style={styles.footnote}>
+          Ceiling {money(safeLimit.daily_budget_ceiling)} per person per day.
+        </Text>
       </View>
-
-      <Text style={styles.footnote}>
-        Ceiling {money(safeLimit.daily_budget_ceiling)} per person per day.
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: 14,
-    marginTop: 10,
-    gap: 10,
+    marginTop: 12,
+    overflow: 'hidden',
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   verdict: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    borderRadius: 11,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    gap: 12,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
   },
   verdictApproved: {
     backgroundColor: colors.mint,
@@ -95,26 +106,44 @@ const styles = StyleSheet.create({
   verdictBlocked: {
     backgroundColor: colors.coralSoft,
   },
-  verdictText: {
+  verdictBody: {
     flex: 1,
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    color: colors.teal,
-    textTransform: 'uppercase',
   },
-  verdictTextBlocked: {
+  verdictTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.teal,
+  },
+  verdictTitleBlocked: {
     color: colors.coral,
+  },
+  verdictReason: {
+    fontSize: 13,
+    color: colors.inkSoft,
+    marginTop: 2,
+  },
+  ledgerContent: {
+    padding: 16,
+    gap: 16,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
+    gap: 12,
   },
-  icon: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
+  iconContainerMint: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.sm,
+    backgroundColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainerCoral: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.sm,
+    backgroundColor: colors.coralSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -122,29 +151,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rowTitle: {
-    fontSize: 13.5,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.ink,
   },
   rowMeta: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.muted,
-    marginTop: 1,
+    marginTop: 2,
   },
   rowValue: {
-    fontSize: 15,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.ink,
-  },
-  rogueValue: {
-    color: colors.coral,
   },
   hairline: {
     height: 1,
     backgroundColor: colors.line,
+    marginLeft: 52,
+  },
+  footer: {
+    backgroundColor: colors.cream,
+    padding: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
   },
   footnote: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.muted,
+    textAlign: 'center',
   },
 });
