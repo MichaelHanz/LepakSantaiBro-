@@ -1,5 +1,5 @@
 # Group Trip Mediator by Team LepakSantaiBro
-**Team:** [Member 1], [Member 2], [Member 3], [Member 4]
+**Team:** Vincent Chew, Vinish Suria
 
 **Problem Statement:** Lifestyle Track - Planning an Escape (Travel Planner)
 
@@ -78,11 +78,11 @@ graph TD
 
 ### 2.3 Mentor Consultation
 
-| Date | Mentor | Feedback Received | What Was Changed |
-| :--- | :--- | :--- | :--- |
-| [Date] | [Mentor Name] | Continuous background location tracking drains battery and violates PDPA/Privacy. | **Massive Pivot.** Dropped background tracking completely. Swapped to an "Opt-In Reconvene" system using Telegram push notifications 30-mins before an event. |
-| [Date] | [Mentor Name] | Relying purely on Gemini to suggest budget restaurants will result in hallucinations. | **Architecture Change.** Implemented a RAG-Lite system. We now query Google Places API *first*, then feed that real data into Gemini to filter by the budget. |
-| [Date] | [Mentor Name] | Complex parallel branching in the UI timeline will cause React state-management hell. | **Scoping Down.** Flattened the database schema. Fission events are now just side-by-side cards in a linear 1D array. |
+| Date | Feedback Received | What Was Changed |
+| :--- | :--- | :--- |
+| 31 August 2026 | Continuous background location tracking drains battery and violates PDPA/Privacy. | **Massive Pivot.** Dropped background tracking completely. Swapped to an "Opt-In Reconvene" system using Telegram push notifications 30-mins before an event. |
+| 31 August 2026 | Relying purely on Gemini to suggest budget restaurants will result in hallucinations. | **Architecture Change.** Implemented a RAG-Lite system. We now query Google Places API *first*, then feed that real data into Gemini to filter by the budget. |
+| 31 August 2026 | Complex parallel branching in the UI timeline will cause React state-management hell. | **Scoping Down.** Flattened the database schema. Fission events are now just side-by-side cards in a linear 1D array. |
 
 ---
 
