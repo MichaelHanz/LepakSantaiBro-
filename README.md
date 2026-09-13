@@ -3,9 +3,9 @@
 
 **Problem Statement:** Lifestyle Track - Planning an Escape (Travel Planner)
 
-**Video Presentation:** [Insert Unlisted Youtube Link]
+**Video Presentation:** [Watch on YouTube](https://youtu.be/pOFKrFlQyk4)
 
-**Presentation Slides:** [Insert Public Link]
+**Presentation Slides:** [View on Google Drive](https://drive.google.com/drive/folders/1K-cAZtNlipioQngB-ZMT2QAh5hgeltqE?usp=sharing)
 
 ---
 
