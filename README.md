@@ -1,4 +1,4 @@
-# Group Trip Mediator by Team LepakSantaiBro
+# Group Trip Mediator by Team Larpers
 **Team:** Vincent Chew, Vinish Suria
 
 **Problem Statement:** Lifestyle Track - Planning an Escape (Travel Planner)
